@@ -1,9 +1,9 @@
 # Design: Uptime Kuma macOS widget
 
-Status: **v0.1.0 in development** (2026-11-24). The core package, menu bar app
-and widget are built and tested against a mock of the Kuma API; not yet
-checked against a real Kuma server or on the desktop over days. Written as a
-plan on 2026-11-24 and kept current here; update it when the design changes.
+Status: **v0.1.0 released** (2026-11-24). Tested on macOS 27.0.1 against a
+real Uptime Kuma 2.5.3 (homelab, 101 monitors) and on the desktop; Kuma 1.23
+only against a mock of its API. Written as a plan on 2026-11-24 and kept
+current here; update it when the design changes.
 
 ## Why
 
@@ -124,6 +124,8 @@ Contents of the group container are protected from other processes
 2. ✅ `KumaKit` with tests; API shape checked against Kuma's source.
 3. ✅ Menu bar app and widget; signed build registers the widget; app polls
    a mock server end to end.
-4. ☐ Verified against a real Kuma 1.23 and 2.x, and on the desktop for a day
-   (reload timing, stale handling after sleep).
-5. ☐ Optional: notifications on change, several pages, Socket.IO login mode.
+4. ✅ v0.1.0 (2026-11-24): verified against a real Kuma 2.5.3 and on the
+   desktop; problems-first ordering, Display filters, Verify TLS certificate.
+5. ☐ Verified against a real Kuma 1.23, and on the desktop over days (reload
+   timing, stale handling after sleep).
+6. ☐ Optional: notifications on change, several pages, Socket.IO login mode.

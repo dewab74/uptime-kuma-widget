@@ -16,9 +16,9 @@ page. It shows what is up and what is down without opening a browser.
 
 ## Status
 
-**Early development (0.1.0, unreleased).** Built and checked against a mock
-of the Uptime Kuma 1.23 and 2.x status page API. Not affiliated with or
-endorsed by the Uptime Kuma project.
+**Early (v0.1.0).** Tested on macOS 27.0.1 against Uptime Kuma 2.5.3, and
+against a mock of the 1.23 status page API. Not affiliated with or endorsed by
+the Uptime Kuma project.
 
 ## What you get
 
@@ -72,7 +72,7 @@ monitor, add it to a status page (it can be a page you never share).
 
 ## Install
 
-Once a release is out, download `kuma-status-<version>.zip` from the
+Download `kuma-status-<version>.zip` from the
 [latest release](https://github.com/dewab74/uptime-kuma-widget/releases/latest)
 (check it against the `.sha256` beside it), unzip it, and move
 `Kuma Status.app` to `/Applications`. The app is signed with a development
