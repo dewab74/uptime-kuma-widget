@@ -6,11 +6,22 @@ import SwiftUI
 // Renders every widget size, light and dark, to PNG, from a live status page
 // or from sample data. For checking layout and for README screenshots:
 //
-//   swift run --package-path Packages/KumaKit kuma-render <out-dir> [server [slug]]
+//   swift run --package-path Packages/KumaKit kuma-render [--hide up,pending,...] <out-dir> [server [slug]]
+//
+// --hide lists the statuses to leave out, as the app's Display settings do:
+// up, pending, maintenance, unknown.
 
-let arguments = CommandLine.arguments.dropFirst()
+var arguments = Array(CommandLine.arguments.dropFirst())
+var options = DisplayOptions.default
+if let flag = arguments.firstIndex(of: "--hide"), flag + 1 < arguments.count {
+    let names = arguments[flag + 1].split(separator: ",").map { $0.lowercased() }
+    let byName = Dictionary(uniqueKeysWithValues: MonitorStatus.allCases.map { ($0.label.lowercased(), $0) })
+        .merging(["unknown": .unknown, "nodata": .unknown]) { first, _ in first }
+    options = DisplayOptions(hiddenStatuses: Set(names.compactMap { byName[$0] }))
+    arguments.removeSubrange(flag...(flag + 1))
+}
 guard let output = arguments.first.map({ URL(fileURLWithPath: $0) }) else {
-    FileHandle.standardError.write(Data("usage: kuma-render <out-dir> [server [slug]]\n".utf8))
+    FileHandle.standardError.write(Data("usage: kuma-render [--hide up,pending,...] <out-dir> [server [slug]]\n".utf8))
     exit(2)
 }
 
@@ -31,7 +42,8 @@ let rendered = await MainActor.run { () -> [String] in
     var names: [String] = []
     for size in WidgetSize.allCases {
         for scheme in [ColorScheme.light, .dark] {
-            let content = WidgetContent(state: state, configured: true, date: .now, staleLimit: 300, size: size)
+            let content = WidgetContent(
+                state: state, configured: true, date: .now, staleLimit: 300, size: size, options: options)
             let view =
                 content
                 .padding(16)

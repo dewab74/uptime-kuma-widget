@@ -29,6 +29,8 @@ struct StatusEntry: TimelineEntry {
     var configured: Bool
     /// Age after which the data is shown as out of date.
     var staleLimit: TimeInterval
+    /// Which monitors the lists show (the app's Display settings).
+    var options: DisplayOptions = .default
 
 }
 
@@ -54,7 +56,7 @@ struct Provider: TimelineProvider {
         completion(
             StatusEntry(
                 date: .now, state: AppGroup.stateStore?.load(), configured: configuration != nil,
-                staleLimit: Self.staleLimit(configuration)))
+                staleLimit: Self.staleLimit(configuration), options: AppGroup.configurationStore.loadDisplay()))
     }
 
     func getTimeline(in context: Context, completion: @escaping (Timeline<StatusEntry>) -> Void) {
@@ -73,6 +75,7 @@ struct Provider: TimelineProvider {
     /// limits how often it gets here).
     static func timeline() async -> Timeline<StatusEntry> {
         let configuration = AppGroup.configurationStore.load()
+        let options = AppGroup.configurationStore.loadDisplay()
         let store = AppGroup.stateStore
         var state = store?.load()
         let limit = staleLimit(configuration)
@@ -94,7 +97,8 @@ struct Provider: TimelineProvider {
             dates.sort()
         }
         let entries = dates.map {
-            StatusEntry(date: $0, state: state, configured: configuration != nil, staleLimit: limit)
+            StatusEntry(
+                date: $0, state: state, configured: configuration != nil, staleLimit: limit, options: options)
         }
         return Timeline(entries: entries, policy: .after(now.addingTimeInterval(refresh)))
     }

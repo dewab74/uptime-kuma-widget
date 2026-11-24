@@ -25,13 +25,18 @@ public struct WidgetContent: View {
     let date: Date
     let isStale: Bool
     let size: WidgetSize
+    let options: DisplayOptions
 
-    public init(state: SharedState?, configured: Bool, date: Date, staleLimit: TimeInterval, size: WidgetSize) {
+    public init(
+        state: SharedState?, configured: Bool, date: Date, staleLimit: TimeInterval, size: WidgetSize,
+        options: DisplayOptions = .default
+    ) {
         self.state = state
         self.configured = configured
         self.date = date
         self.isStale = state?.isStale(at: date, limit: staleLimit) ?? true
         self.size = size
+        self.options = options
     }
 
     /// The colour the background is washed with.
@@ -46,8 +51,8 @@ public struct WidgetContent: View {
             Group {
                 switch size {
                 case .small: SmallView(snapshot: snapshot, footer: footer)
-                case .medium: MediumView(snapshot: snapshot, footer: footer)
-                case .large: LargeView(snapshot: snapshot, footer: footer)
+                case .medium: MediumView(snapshot: snapshot, options: options, footer: footer)
+                case .large: LargeView(snapshot: snapshot, options: options, footer: footer)
                 }
             }
             .opacity(isStale ? 0.55 : 1)
@@ -100,6 +105,7 @@ private struct SmallView: View {
 
 private struct MediumView: View {
     let snapshot: StatusSnapshot
+    let options: DisplayOptions
     let footer: Footer
 
     var body: some View {
@@ -121,12 +127,16 @@ private struct MediumView: View {
             .frame(width: 118, alignment: .leading)
 
             VStack(alignment: .leading, spacing: 7) {
-                let rows = snapshot.monitorsByUrgency
-                ForEach(rows.prefix(rows.count > 5 ? 4 : 5)) { monitor in
+                let rows = snapshot.displayMonitors(options)
+                let filtered = snapshot.filteredOut(options)
+                let shown = rows.count > 5 ? 4 : rows.count
+                ForEach(rows.prefix(shown)) { monitor in
                     MonitorRow(monitor: monitor, slots: 12, showUptime: false)
                 }
-                if rows.count > 5 {
-                    MoreLabel(hidden: Array(rows.dropFirst(4)))
+                if rows.isEmpty {
+                    FilteredNote(filtered: filtered)
+                } else if rows.count > shown || !filtered.isEmpty {
+                    MoreLabel(overflow: Array(rows.dropFirst(shown)), filtered: filtered)
                 }
                 Spacer(minLength: 0)
             }
@@ -137,6 +147,7 @@ private struct MediumView: View {
 
 private struct LargeView: View {
     let snapshot: StatusSnapshot
+    let options: DisplayOptions
     let footer: Footer
 
     /// Rows that fit under the header, counting a group heading as a row.
@@ -162,7 +173,10 @@ private struct LargeView: View {
                 Notice(text: notice, isIncident: snapshot.incident != nil)
             }
             VStack(alignment: .leading, spacing: 6) {
-                let layout = rows(capacity: capacity - (snapshot.incident ?? snapshot.maintenance.first == nil ? 0 : 2))
+                let noticeRows = snapshot.incident ?? snapshot.maintenance.first == nil ? 0 : 2
+                // The "+N more" line is always there while a filter hides something.
+                let moreRow = snapshot.filteredOut(options).isEmpty ? 0 : 1
+                let layout = rows(capacity: capacity - noticeRows - moreRow)
                 ForEach(layout.items, id: \.id) { item in
                     switch item.kind {
                     case .group(let name):
@@ -175,8 +189,11 @@ private struct LargeView: View {
                         MonitorRow(monitor: monitor, slots: 24, showUptime: true)
                     }
                 }
-                if !layout.hidden.isEmpty {
-                    MoreLabel(hidden: layout.hidden)
+                let filtered = snapshot.filteredOut(options)
+                if layout.items.isEmpty {
+                    FilteredNote(filtered: filtered)
+                } else if !layout.hidden.isEmpty || !filtered.isEmpty {
+                    MoreLabel(overflow: layout.hidden, filtered: filtered)
                 }
             }
             Spacer(minLength: 0)
@@ -193,10 +210,11 @@ private struct LargeView: View {
         var kind: Kind
     }
 
-    /// Group headings and monitors in page order. When everything does not
-    /// fit, problem monitors are kept and healthy ones are dropped first.
+    /// Group headings and monitors, problems first (`displayGroups`). When
+    /// everything does not fit, problem monitors are kept and healthy ones
+    /// are dropped first.
     private func rows(capacity: Int) -> (items: [Item], hidden: [MonitorSnapshot]) {
-        let groups = snapshot.groups.filter { !$0.monitors.isEmpty }
+        let groups = snapshot.displayGroups(options)
         let all = groups.flatMap(\.monitors)
         let showHeadings = groups.count > 1
         func build(keeping keep: Set<String>?) -> [Item] {
@@ -317,13 +335,46 @@ private struct MonitorRow: View {
     }
 }
 
+/// What the list leaves out: rows that did not fit ("+3 more"), and rows the
+/// Display settings hide ("100 up hidden").
 private struct MoreLabel: View {
-    let hidden: [MonitorSnapshot]
+    let overflow: [MonitorSnapshot]
+    let filtered: [MonitorSnapshot]
 
     var body: some View {
-        Text(hidden.allSatisfy { $0.status == .up } ? "+\(hidden.count) more, all up" : "+\(hidden.count) more")
+        Text(text)
             .font(.caption2)
             .foregroundStyle(.secondary)
+            .lineLimit(1)
+    }
+
+    private var text: String {
+        var parts: [String] = []
+        if !overflow.isEmpty {
+            let allUp = filtered.isEmpty && overflow.allSatisfy { $0.status == .up }
+            parts.append("+\(overflow.count) more" + (allUp ? ", all up" : ""))
+        }
+        if !filtered.isEmpty {
+            parts.append(
+                filtered.allSatisfy { $0.status == .up } ? "\(filtered.count) up hidden" : "\(filtered.count) hidden")
+        }
+        return parts.joined(separator: " · ")
+    }
+}
+
+/// Stands in for the list when the Display settings leave nothing to show.
+private struct FilteredNote: View {
+    let filtered: [MonitorSnapshot]
+
+    var body: some View {
+        Label(text, systemImage: "line.3.horizontal.decrease.circle")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+    }
+
+    private var text: String {
+        if filtered.allSatisfy({ $0.status == .up }) { return "All \(filtered.count) up" }
+        return "\(filtered.count) monitors hidden"
     }
 }
 

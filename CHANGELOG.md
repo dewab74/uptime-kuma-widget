@@ -8,6 +8,17 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 
+- Settings › Display: choose which statuses the menu bar list and the widget
+  show (Up, Pending, Maintenance, No data), with a **Problems Only** shortcut.
+  Down monitors are always shown; headlines and counts still include every
+  monitor. A list left empty by the filter says so ("All 100 up"), and the
+  widget's last line counts what it hides ("100 up hidden").
+- Problems first everywhere: groups with problems lead, and within a group
+  monitors are ordered down, pending, no data, maintenance, up. Before, the
+  large widget and the menu bar list kept the status page's order.
+- `kuma-render --hide <statuses>` renders the widget as the Display settings
+  would.
+
 - Kuma Status, a menu bar app that polls an Uptime Kuma status page (public
   API, no login) every 30 s to 10 min, with exponential backoff up
   to 10 min while the server fails, and a refresh on wake from sleep.

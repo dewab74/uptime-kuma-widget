@@ -20,6 +20,7 @@ public struct ConfigurationStore: @unchecked Sendable {
     // UserDefaults is documented thread-safe; it is just not marked Sendable.
     private let defaults: UserDefaults
     static let key = "configuration"
+    static let displayKey = "display"
 
     public init(defaults: UserDefaults) {
         self.defaults = defaults
@@ -35,6 +36,17 @@ public struct ConfigurationStore: @unchecked Sendable {
             defaults.set(data, forKey: Self.key)
         } else {
             defaults.removeObject(forKey: Self.key)
+        }
+    }
+
+    public func loadDisplay() -> DisplayOptions {
+        guard let data = defaults.data(forKey: Self.displayKey) else { return .default }
+        return (try? JSONDecoder().decode(DisplayOptions.self, from: data)) ?? .default
+    }
+
+    public func saveDisplay(_ options: DisplayOptions) {
+        if let data = try? JSONEncoder().encode(options) {
+            defaults.set(data, forKey: Self.displayKey)
         }
     }
 }

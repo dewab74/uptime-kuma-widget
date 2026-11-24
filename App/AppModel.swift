@@ -11,6 +11,8 @@ final class AppModel {
     private(set) var configuration: KumaConfiguration?
     private(set) var state: SharedState?
     private(set) var isRefreshing = false
+    /// Which monitors the popover and the widget list (Settings › Display).
+    private(set) var display: DisplayOptions
 
     @ObservationIgnored private let configurationStore = AppGroup.configurationStore
     @ObservationIgnored private var poller: Poller?
@@ -21,6 +23,7 @@ final class AppModel {
 
     init() {
         configuration = configurationStore.load()
+        display = configurationStore.loadDisplay()
         #if DEBUG
             if let launch = DebugSupport.launchConfiguration {
                 configurationStore.save(launch)
@@ -56,6 +59,13 @@ final class AppModel {
         self.configuration = configuration
         if pageChanged { state = nil }
         start()
+        WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    func applyDisplay(_ options: DisplayOptions) {
+        guard options != display else { return }
+        display = options
+        configurationStore.saveDisplay(options)
         WidgetCenter.shared.reloadAllTimelines()
     }
 

@@ -22,7 +22,7 @@ struct MenuContent: View {
                         .padding(.bottom, 8)
                 }
                 Divider()
-                MonitorList(snapshot: snapshot)
+                MonitorList(snapshot: snapshot, options: model.display)
                     .opacity(model.isStale ? 0.6 : 1)
             } else {
                 waiting
@@ -134,11 +134,25 @@ struct MenuContent: View {
 
 private struct MonitorList: View {
     let snapshot: StatusSnapshot
+    let options: DisplayOptions
 
     var body: some View {
-        let groups = snapshot.groups.filter { !$0.monitors.isEmpty }
+        // Problems first: groups with the worst monitors lead, worst monitors
+        // first within each group, filtered by Settings › Display.
+        let groups = snapshot.displayGroups(options)
+        let filtered = snapshot.filteredOut(options)
         ScrollView {
             VStack(alignment: .leading, spacing: 4) {
+                if groups.isEmpty {
+                    Label(
+                        filtered.allSatisfy { $0.status == .up }
+                            ? "All \(filtered.count) monitors are up" : "\(filtered.count) monitors hidden",
+                        systemImage: "line.3.horizontal.decrease.circle"
+                    )
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 6)
+                }
                 ForEach(groups) { group in
                     if groups.count > 1 {
                         Text(group.name.uppercased())
@@ -151,6 +165,15 @@ private struct MonitorList: View {
                     ForEach(group.monitors) { monitor in
                         MonitorRow(monitor: monitor)
                     }
+                }
+                if !groups.isEmpty && !filtered.isEmpty {
+                    Text(
+                        filtered.allSatisfy { $0.status == .up }
+                            ? "\(filtered.count) up monitors hidden" : "\(filtered.count) monitors hidden"
+                    )
+                    .font(.caption)
+                    .foregroundStyle(.tertiary)
+                    .padding(.top, 6)
                 }
             }
             .padding(14)
