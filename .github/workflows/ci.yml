@@ -20,7 +20,7 @@ jobs:
       # that crashes at runtime. The PNGs are kept for review.
       - run: swift run --package-path Packages/KumaKit kuma-render widget-renders
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: widget-renders
           path: widget-renders/
