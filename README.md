@@ -98,12 +98,16 @@ and use `artifacts/Kuma Status.app`.
 
 ## Set up
 
-Open the app. On the first run it opens Settings:
+Open the app. On the first run it opens Settings at **Connection**:
 
-- **Server**: your Kuma address, e.g. `https://status.example.com`. You can
-  paste a whole status page link (`https://status.example.com/status/home`)
-  and the slug is filled in for you.
+- **URL**: your Kuma address, with its port if it is not on 80/443, e.g.
+  `https://status.example.com` or `http://kuma.lan:3001`. You can paste a
+  whole status page link (`https://status.example.com/status/home`) and the
+  slug is filled in for you.
 - **Status page**: the slug, the last part of the page's link.
+- **Verify TLS certificate**: leave on. Turn it off only for a Kuma with a
+  self-signed or private-CA certificate your Mac does not trust; the
+  connection stays encrypted, but the server's identity is not checked.
 - **Check every**: 30 s to 10 min.
 - **Open at login**: recommended, so the widget stays current.
 
@@ -117,9 +121,11 @@ permission to reach devices on your local network.
 
 The app talks only to the server you enter, with unauthenticated `GET`
 requests to the public status page API. It stores the address and the last
-result locally, in its App Group container. No credentials are used, and
-nothing is sent anywhere else. The app and widget are sandboxed with
-outgoing network access only. See [SECURITY.md](SECURITY.md).
+result locally, in its App Group container. No credentials are used (Kuma's
+status page API has none; its API keys only cover `/metrics`), and nothing is
+sent anywhere else. Turning off **Verify TLS certificate** skips certificate
+checks for that one host only. The app and widget are sandboxed with outgoing
+network access only. See [SECURITY.md](SECURITY.md).
 
 ## Development
 

@@ -12,10 +12,15 @@ final class StubProtocol: URLProtocol, @unchecked Sendable {
     }
 
     nonisolated(unsafe) private static var routes: [String: Answer] = [:]
+    nonisolated(unsafe) private static var failures: [String: URLError.Code] = [:]
     private static let lock = NSLock()
 
     static func register(host: String, path: String, status: Int = 200, body: Data) {
         lock.withLock { routes[host + path] = Answer(status: status, body: body) }
+    }
+
+    static func fail(host: String, path: String, with code: URLError.Code) {
+        lock.withLock { failures[host + path] = code }
     }
 
     static func session() -> URLSession {
@@ -30,6 +35,10 @@ final class StubProtocol: URLProtocol, @unchecked Sendable {
     override func startLoading() {
         let url = request.url!
         let key = (url.host ?? "") + url.path
+        if let code = Self.lock.withLock({ Self.failures[key] }) {
+            client?.urlProtocol(self, didFailWithError: URLError(code))
+            return
+        }
         let answer = Self.lock.withLock { Self.routes[key] }
         guard let answer else {
             client?.urlProtocol(self, didFailWithError: URLError(.cannotConnectToHost))
@@ -151,6 +160,41 @@ func fixture(_ name: String) throws -> Data {
                 return
             }
         }
+    }
+
+    @Test func reportsAnUntrustedCertificateWithTheFix() async throws {
+        let host = "selfsigned.test"
+        for path in ["/api/status-page/home", "/api/status-page/heartbeat/home"] {
+            StubProtocol.fail(host: host, path: path, with: .serverCertificateUntrusted)
+        }
+        let configuration = KumaConfiguration(baseURL: URL(string: "https://\(host)")!, slug: "home")
+        do {
+            _ = try await client().fetch(configuration)
+            Issue.record("expected a certificate error")
+        } catch {
+            guard case .certificate = error else {
+                Issue.record("expected a certificate error, got \(error)")
+                return
+            }
+            #expect(error.errorDescription?.contains("turn off Verify TLS certificate") == true)
+        }
+    }
+
+    @Test func skipsCertificateChecksOnlyForTheConfiguredHost() {
+        let trust = NSURLAuthenticationMethodServerTrust
+        #expect(
+            UnverifiedTLS.accepts(authenticationMethod: trust, challengeHost: "kuma.lan", configuredHost: "kuma.lan"))
+        #expect(
+            UnverifiedTLS.accepts(authenticationMethod: trust, challengeHost: "KUMA.lan", configuredHost: "kuma.lan"))
+        #expect(
+            !UnverifiedTLS.accepts(authenticationMethod: trust, challengeHost: "evil.test", configuredHost: "kuma.lan"))
+        #expect(
+            !UnverifiedTLS.accepts(
+                authenticationMethod: NSURLAuthenticationMethodHTTPBasic, challengeHost: "kuma.lan",
+                configuredHost: "kuma.lan"))
+        // One session per host, reused across polls.
+        #expect(UnverifiedTLS.session(for: "kuma.lan") === UnverifiedTLS.session(for: "kuma.lan"))
+        #expect(UnverifiedTLS.session(for: "kuma.lan") !== UnverifiedTLS.session(for: "other.lan"))
     }
 
     @Test(arguments: [

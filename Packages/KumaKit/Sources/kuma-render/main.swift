@@ -6,13 +6,16 @@ import SwiftUI
 // Renders every widget size, light and dark, to PNG, from a live status page
 // or from sample data. For checking layout and for README screenshots:
 //
-//   swift run --package-path Packages/KumaKit kuma-render [--hide up,pending,...] <out-dir> [server [slug]]
+//   swift run --package-path Packages/KumaKit kuma-render [--hide up,...] [--insecure] <out-dir> [url [slug]]
 //
 // --hide lists the statuses to leave out, as the app's Display settings do:
-// up, pending, maintenance, unknown.
+// up, pending, maintenance, unknown. --insecure skips certificate checks, as
+// turning off Verify TLS certificate does.
 
 var arguments = Array(CommandLine.arguments.dropFirst())
 var options = DisplayOptions.default
+let insecure = arguments.contains("--insecure")
+arguments.removeAll { $0 == "--insecure" }
 if let flag = arguments.firstIndex(of: "--hide"), flag + 1 < arguments.count {
     let names = arguments[flag + 1].split(separator: ",").map { $0.lowercased() }
     let byName = Dictionary(uniqueKeysWithValues: MonitorStatus.allCases.map { ($0.label.lowercased(), $0) })
@@ -21,14 +24,22 @@ if let flag = arguments.firstIndex(of: "--hide"), flag + 1 < arguments.count {
     arguments.removeSubrange(flag...(flag + 1))
 }
 guard let output = arguments.first.map({ URL(fileURLWithPath: $0) }) else {
-    FileHandle.standardError.write(Data("usage: kuma-render [--hide up,pending,...] <out-dir> [server [slug]]\n".utf8))
+    FileHandle.standardError.write(
+        Data("usage: kuma-render [--hide up,pending,...] [--insecure] <out-dir> [url [slug]]\n".utf8))
     exit(2)
 }
 
 var state = SharedState(snapshot: SampleData.snapshot())
 if arguments.count >= 2 {
     let rest = Array(arguments.dropFirst())
-    let configuration = try KumaConfiguration.parse(address: rest[0], slug: rest.count > 1 ? rest[1] : "")
+    let configuration: KumaConfiguration
+    do {
+        configuration = try KumaConfiguration.parse(
+            address: rest[0], slug: rest.count > 1 ? rest[1] : "", verifyCertificate: !insecure)
+    } catch {
+        FileHandle.standardError.write(Data("\(error.errorDescription ?? "invalid URL")\n".utf8))
+        exit(2)
+    }
     do {
         state = SharedState(snapshot: try await StatusPageClient().fetch(configuration))
     } catch {
