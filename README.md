@@ -26,15 +26,19 @@ endorsed by the Uptime Kuma project.
   - *Small*: the overall verdict and the names of whatever is down.
   - *Medium*: the verdict, counts, and the most urgent monitors with their
     recent heartbeats.
-  - *Large*: every monitor, grouped as on your status page, with heartbeat
-    bars and 24-hour uptime. Problems are kept on screen first when there are
-    more monitors than fit. Shows a pinned incident or active maintenance.
+  - *Large*: monitors grouped as on your status page, with heartbeat bars and
+    24-hour uptime. Groups with problems come first, and the worst monitors
+    lead each group. Shows a pinned incident or active maintenance.
   - Light and dark. Data older than three poll
     intervals (at least 5 minutes) is dimmed and marked offline, so a dead
     server is never shown as green.
   - Clicking the widget opens the status page in your browser.
 - **Menu bar app**: an icon that shows the overall state and the number of
-  problems, and a popover with the full list. You set the server here.
+  problems, and a popover with the full list, problems first. You set the
+  server here.
+- **Display settings**: choose which statuses the lists show (Up, Pending,
+  Maintenance, No data), or click **Problems Only**. Down monitors are always
+  listed, and the headline and counts always cover every monitor.
 
 ## How it stays current
 
@@ -142,6 +146,7 @@ Render the widget without installing it, from sample data or a live page:
 ```bash
 swift run --package-path Packages/KumaKit kuma-render /tmp/widgets
 swift run --package-path Packages/KumaKit kuma-render /tmp/widgets https://status.example.com home
+swift run --package-path Packages/KumaKit kuma-render --hide up,maintenance /tmp/widgets   # as Display settings
 ```
 
 Design notes and decisions: [docs/design.md](docs/design.md).

@@ -10,7 +10,7 @@ struct StatusWidgetView: View {
     var body: some View {
         let content = WidgetContent(
             state: entry.state, configured: entry.configured, date: entry.date, staleLimit: entry.staleLimit,
-            size: size)
+            size: size, options: entry.options)
         content
             .containerBackground(for: .widget) {
                 WidgetBackground(status: content.backgroundStatus)

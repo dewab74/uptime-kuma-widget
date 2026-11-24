@@ -1,5 +1,10 @@
-#!/usr/bin/env swift  // Draws the app icon (a pulse line on a dark squircle) and writes the  // AppIcon set. Re-run after changing the drawing:
-//   scripts/make-icon.swift App/Assets.xcassets/AppIcon.appiconset
+// Draws the app icon (a pulse line on a dark squircle) and writes the
+// AppIcon set. Re-run after changing the drawing:
+//
+//   swift scripts/make-icon.swift App/Assets.xcassets/AppIcon.appiconset
+//
+// No `#!/usr/bin/env swift` line on purpose: swift-format folds the comments
+// below a shebang into it, which breaks the script.
 import AppKit
 
 let output = URL(fileURLWithPath: CommandLine.arguments.dropFirst().first ?? "App/Assets.xcassets/AppIcon.appiconset")

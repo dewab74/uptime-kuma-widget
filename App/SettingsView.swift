@@ -1,8 +1,22 @@
 import KumaKit
+import KumaUI
 import ServiceManagement
 import SwiftUI
 
+/// The Settings window: where to read from, and what the lists show.
 struct SettingsView: View {
+    var body: some View {
+        TabView {
+            ServerSettings()
+                .tabItem { Label("Server", systemImage: "server.rack") }
+            DisplaySettings()
+                .tabItem { Label("Display", systemImage: "line.3.horizontal.decrease.circle") }
+        }
+        .frame(width: 460)
+    }
+}
+
+private struct ServerSettings: View {
     @Environment(AppModel.self) private var model
 
     @State private var address = ""
@@ -59,7 +73,6 @@ struct SettingsView: View {
             }
         }
         .formStyle(.grouped)
-        .frame(width: 460)
         .fixedSize(horizontal: false, vertical: true)
         .onAppear(perform: load)
     }
@@ -136,4 +149,66 @@ struct SettingsView: View {
 extension MonitorStatus {
     /// Kuma's green is too light for text on a light background.
     fileprivate var colorForText: Color { Color(nsColor: .systemGreen) }
+}
+
+/// Which monitors the popover and the widget list. Applies at once.
+private struct DisplaySettings: View {
+    @Environment(AppModel.self) private var model
+
+    var body: some View {
+        Form {
+            Section {
+                Toggle(isOn: .constant(true)) { row(.down, note: "Always shown") }
+                    .disabled(true)
+                ForEach(DisplayOptions.hideableStatuses, id: \.self) { status in
+                    Toggle(isOn: binding(for: status)) { row(status, note: nil) }
+                }
+            } header: {
+                Text("Show in lists")
+            } footer: {
+                Text(
+                    "Applies to the menu bar list and the widget. Problems are always listed first. "
+                        + "Headlines and counts still include every monitor."
+                )
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            }
+
+            Section {
+                HStack {
+                    Button("Problems Only") {
+                        model.applyDisplay(DisplayOptions(hiddenStatuses: [.up, .maintenance]))
+                    }
+                    Button("Show All") { model.applyDisplay(.default) }
+                        .disabled(!model.display.isFiltering)
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func row(_ status: MonitorStatus, note: String?) -> some View {
+        HStack(spacing: 8) {
+            StatusDot(status, size: 8)
+            Text(status.label)
+            if let note {
+                Text(note).foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    private func binding(for status: MonitorStatus) -> Binding<Bool> {
+        Binding(
+            get: { model.display.shows(status) },
+            set: { show in
+                var options = model.display
+                if show {
+                    options.hiddenStatuses.remove(status)
+                } else {
+                    options.hiddenStatuses.insert(status)
+                }
+                model.applyDisplay(options)
+            })
+    }
 }
