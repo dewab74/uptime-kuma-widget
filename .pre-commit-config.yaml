@@ -1,0 +1,124 @@
+# Pre-commit hooks: linting and credential-leak scanning run HERE, locally,
+# before a commit is created - not as GitHub Actions. A secret that reaches a
+# remote is already compromised; a CI job that reports it afterwards has lost.
+#
+# After cloning this repo:   pre-commit install
+# Run over everything:       pre-commit run --all-files
+# Bump pinned revs:          pre-commit autoupdate
+#
+# `git commit --no-verify` bypasses all of this. Don't use it to get past a
+# leak finding - rotate the credential instead.
+
+default_install_hook_types: [pre-commit, commit-msg]
+default_stages: [pre-commit]
+fail_fast: false
+
+repos:
+  # ---- Universal hygiene -------------------------------------------------
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-json
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+      - id: check-executables-have-shebangs
+      - id: check-shebang-scripts-are-executable
+      - id: detect-private-key
+      # Uncomment once the repo has real branches. It blocks committing while
+      # on main, which is a good guard on an established repo and pure friction
+      # on a fresh one whose first commit necessarily lands there.
+      # - id: no-commit-to-branch
+      #   args: [--branch, main, --branch, master]
+
+  # ---- Credential / secret leak scanning ---------------------------------
+  # Two scanners on purpose: gitleaks matches known credential shapes with
+  # almost no false positives; detect-secrets adds entropy detection for the
+  # formats nobody wrote a rule for.
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: [--baseline, .secrets.baseline]
+        # .gitleaks.toml is excluded because its allowlist necessarily
+        # contains example credential literals - the scanner would flag the
+        # config that tells the other scanner to ignore them.
+        exclude: (?x)^(
+            \.secrets\.baseline|
+            \.gitleaks\.toml|
+            Package\.resolved
+          )$
+
+  # ---- Markdown ----------------------------------------------------------
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.49.1
+    hooks:
+      - id: markdownlint-fix
+        args: [--config, .markdownlint.yaml]
+
+  # ---- Commit message (optional) -----------------------------------------
+  # Only add this if the repo actually uses conventional commits for changelog
+  # or release automation. Enforcing a message format nobody consumes is pure
+  # friction. Requires: pre-commit install --hook-type commit-msg
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v4.4.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+
+  # ---- Bash / shell ------------------------------------------------------
+  # shellcheck-py rather than koalaman/shellcheck-precommit: the latter runs
+  # through Docker, which makes commits fail on any machine without a running
+  # daemon. This one ships a wheel and just works.
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.11.0.1
+    hooks:
+      - id: shellcheck
+        args: [--severity=warning, --external-sources]
+
+  - repo: https://github.com/scop/pre-commit-shfmt
+    rev: v3.13.1-1
+    hooks:
+      - id: shfmt
+        args: [--write, --indent=2, --case-indent, --binary-next-line]
+
+  # ---- Swift / Xcode -----------------------------------------------------
+  # Local hooks: they use the toolchain that ships with the installed Xcode,
+  # so the hook and a plain build can never disagree. Needs Xcode 16+ and
+  # XcodeGen (`brew install xcodegen`).
+  - repo: local
+    hooks:
+      - id: swift-format
+        name: swift format lint --strict
+        entry: swift format lint --strict --recursive --parallel App Widget Packages scripts
+        language: system
+        files: (\.swift|\.swift-format)$
+        pass_filenames: false
+
+      - id: swift-test
+        name: swift test (KumaKit)
+        entry: swift test --package-path Packages/KumaKit -Xswiftc -warnings-as-errors
+        language: system
+        files: ^Packages/KumaKit/
+        pass_filenames: false
+
+      - id: xcode-build
+        name: xcodebuild (warnings as errors, unsigned)
+        entry: scripts/build.sh --check
+        language: system
+        files: (\.swift|\.plist|\.entitlements|\.xcconfig|project\.yml|Package\.swift|\.xcassets/.*)$
+        pass_filenames: false

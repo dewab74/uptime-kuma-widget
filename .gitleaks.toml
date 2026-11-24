@@ -1,0 +1,32 @@
+# Extends the built-in gitleaks ruleset rather than replacing it - the default
+# rules cover the credential formats that actually get leaked, and a hand-rolled
+# ruleset will always be behind them.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Paths and patterns that are known-safe"
+
+paths = [
+  '''(^|/)\.secrets\.baseline$''',
+  '''(^|/)(package-lock\.json|poetry\.lock|uv\.lock|go\.sum|packages\.lock\.json|Cargo\.lock|yarn\.lock)$''',
+  '''\.(png|jpg|jpeg|gif|pdf|ico|woff2?)$''',
+]
+
+# Obvious placeholders. Keep this list short and specific - every entry here is
+# a pattern the scanner will stop looking at, so a broad regex is a hole.
+regexes = [
+  '''(?i)(example|dummy|placeholder|changeme|your[-_]?)(key|token|secret|password)''',
+  '''AKIAIOSFODNN7EXAMPLE''',
+  '''xxxx+''',
+]
+
+# Add project-specific rules below if a service you use has a token format the
+# default set doesn't know about. Prefer a tight regex with an entropy floor.
+#
+# [[rules]]
+# id = "internal-service-token"
+# description = "Internal service token"
+# regex = '''\bist_[a-zA-Z0-9]{32}\b'''
+# entropy = 3.5
+# keywords = ["ist_"]

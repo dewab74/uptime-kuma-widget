@@ -1,0 +1,32 @@
+# Backstop only. Linting and secret scanning run locally in the pre-commit
+# hooks, before a commit exists. This job catches commits that skipped them
+# (`--no-verify`, or a clone without `pre-commit install`) and runs the exact
+# same .pre-commit-config.yaml, so it cannot drift from what developers see.
+
+name: pre-commit backstop
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  pre-commit:
+    # macOS: the swift-format, swift-test and xcodebuild hooks need Xcode.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0 # full history so gitleaks can scan it
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - uses: pre-commit/action@v3.0.1

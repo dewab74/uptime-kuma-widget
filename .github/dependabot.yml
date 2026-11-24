@@ -1,0 +1,7 @@
+version: 2
+updates:
+  # KumaKit has no package dependencies yet; add a `swift` entry when it does.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

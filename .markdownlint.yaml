@@ -1,0 +1,26 @@
+# markdownlint rules. Defaults are mostly right; these are the ones worth
+# overriding for docs that real humans write.
+default: true
+
+# Line length: prose wrapping is a matter of taste and hard-wrapping tables and
+# long URLs is worse than the alternative.
+MD013:
+  line_length: 100
+  code_blocks: false
+  tables: false
+  headings: false
+
+# Allow inline HTML - README badges, <details> blocks, anchors.
+MD033: false
+
+# Duplicate headings are fine when nested under different parents
+# (e.g. several "## Usage" under different sections).
+MD024:
+  siblings_only: true
+
+# First line need not be a top-level heading (front matter, badges).
+MD041: false
+
+# Ordered lists: allow "1." repeated, which keeps diffs clean on insert.
+MD029:
+  style: one_or_ordered

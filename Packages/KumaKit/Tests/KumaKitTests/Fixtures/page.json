@@ -1,0 +1,16 @@
+{
+  "config": {"slug": "home", "title": "Home Lab", "description": null, "icon": "/icon.svg", "published": true},
+  "incidents": [{"id": 4, "title": "Storage maintenance overran", "content": "", "style": "warning"}],
+  "publicGroupList": [
+    {"id": 1, "name": "Network", "weight": 1, "monitorList": [
+      {"id": 1, "name": "Router", "sendUrl": 0, "type": "ping"},
+      {"id": 2, "name": "DNS", "sendUrl": 0, "type": "dns"}
+    ]},
+    {"id": 2, "name": "Apps", "weight": 2, "monitorList": [
+      {"id": 3, "name": "Home Assistant", "sendUrl": 1, "type": "http", "url": "https://ha.example.com"},
+      {"id": 4, "name": "Plex", "sendUrl": 0, "type": "http"},
+      {"id": 2, "name": "DNS", "sendUrl": 0, "type": "dns"}
+    ]}
+  ],
+  "maintenanceList": [{"id": 9, "title": "NAS firmware", "status": "under-maintenance"}]
+}

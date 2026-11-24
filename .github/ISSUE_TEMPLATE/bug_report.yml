@@ -1,0 +1,37 @@
+name: Bug report
+description: Something does not work as documented
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: input
+    id: app-version
+    attributes:
+      label: Kuma Status version
+    validations:
+      required: true
+  - type: input
+    id: macos-version
+    attributes:
+      label: macOS version
+      placeholder: "15.2"
+    validations:
+      required: true
+  - type: input
+    id: kuma-version
+    attributes:
+      label: Uptime Kuma version
+      placeholder: "2.0.2"
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log
+      description: >-
+        `log show --last 30m --predicate 'subsystem == "io.github.dewab74.KumaStatus"' --info`.
+        Remove host names you do not want public.
+      render: text

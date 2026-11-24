@@ -1,0 +1,15 @@
+name: Feature request
+description: Suggest a widget layout, option or data source
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would you like to see
+      description: What you want to know at a glance that the widget does not show today.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change

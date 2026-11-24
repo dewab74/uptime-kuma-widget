@@ -1,0 +1,50 @@
+# ---- Universal -----------------------------------------------------------
+# Secrets: belt and braces. The hooks scan for leaked credentials, but the
+# cheapest leak to prevent is the file git never tracked in the first place.
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.mobileprovision
+*.provisionprofile
+id_rsa
+id_ed25519
+*.kdbx
+secrets.y*ml
+credentials.json
+
+# OS / editor
+.DS_Store
+*.swp
+*.swo
+*~
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Logs and scratch
+*.log
+tmp/
+.tmp/
+.cache/
+
+# ---- Swift / Xcode -------------------------------------------------------
+# The Xcode project is generated from project.yml by XcodeGen; project.yml is
+# the source of truth, so the .xcodeproj never drifts from it in review.
+*.xcodeproj/
+*.xcworkspace/
+!Packages/**/*.xcworkspace/
+.build/
+.swiftpm/
+DerivedData/
+build/
+xcuserdata/
+*.xcresult
+# Release output is built and checksummed locally by scripts/release.sh.
+artifacts/
+
+# Personal signing settings (team id); see Signing.example.xcconfig.
+Signing.xcconfig

@@ -1,0 +1,6 @@
+{
+  "config": {"slug": "default", "title": "Old Kuma"},
+  "incident": {"id": 1, "title": "Upstream ISP outage"},
+  "publicGroupList": [{"id": 7, "name": "Services", "monitorList": [{"id": 10, "name": "Web"}]}],
+  "maintenanceList": []
+}
