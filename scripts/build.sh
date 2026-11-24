@@ -5,8 +5,10 @@
 #   scripts/build.sh            Debug build, signed if Config/Signing.xcconfig exists
 #   scripts/build.sh --release  Release build into artifacts/ (signed; see CONTRIBUTING.md)
 #   scripts/build.sh --check    Unsigned Debug build, warnings as errors (pre-commit, CI)
+#   scripts/build.sh --check-release  The same in Release (CI)
 #
 # Output: build/ (DerivedData) and, for --release, artifacts/Kuma Status.app.
+# VERSION=X.Y.Z overrides MARKETING_VERSION (scripts/package-app.sh sets it).
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -15,9 +17,10 @@ mode=debug
 case "${1:-}" in
   --release) mode=release ;;
   --check) mode=check ;;
+  --check-release) mode=check-release ;;
   "") ;;
   *)
-    echo "usage: $0 [--release|--check]" >&2
+    echo "usage: $0 [--release|--check|--check-release]" >&2
     exit 2
     ;;
 esac
@@ -30,10 +33,15 @@ xcodegen generate --quiet
 
 args=(-project KumaStatus.xcodeproj -scheme KumaStatus -destination 'generic/platform=macOS'
   -derivedDataPath build -quiet)
+if [[ -n ${VERSION:-} ]]; then
+  args+=(MARKETING_VERSION="$VERSION")
+fi
 
 case "$mode" in
-  check)
-    xcodebuild "${args[@]}" -configuration Debug \
+  check | check-release)
+    configuration=Debug
+    [[ $mode == check-release ]] && configuration=Release
+    xcodebuild "${args[@]}" -configuration "$configuration" \
       CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" DEVELOPMENT_TEAM="" build
     ;;
   debug)

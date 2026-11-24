@@ -94,6 +94,13 @@ personal team signs it. The group id reaches code through the `KumaAppGroup`
 Info.plist key. An unsigned build (hooks, CI) has no container: the app falls
 back to Application Support so it still runs, and the widget does not load.
 
+Releases are cut locally (`scripts/release.sh`, as in launchbox-mqtt): the
+signing identity stays on the developer's Mac, and CI builds unsigned in Debug
+and Release only to prove the code compiles. The release zip is development
+signed, not notarized; users approve the first open in Privacy & Security.
+Not yet checked: that a development-signed build from one Mac runs, and its
+widget loads, on another.
+
 Contents of the group container are protected from other processes
 (including Terminal) on current macOS, so debug builds take
 `-KumaServer/-KumaSlug/-KumaInterval` launch arguments instead of

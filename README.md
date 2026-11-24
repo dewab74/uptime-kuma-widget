@@ -63,14 +63,19 @@ monitor, add it to a status page (it can be a page you never share).
 
 - macOS 14 Sonoma or later.
 - Uptime Kuma 1.23 or 2.x with a published status page.
-- To build: Xcode 16 or later and [XcodeGen](https://github.com/yonaskolb/XcodeGen)
-  (`brew install xcodegen`). An Apple ID's free personal team is enough to
-  sign it for your own Mac.
+- To build from source: Xcode 16 or later and
+  [XcodeGen](https://github.com/yonaskolb/XcodeGen).
 
-## Install (from source)
+## Install
 
-There are no prebuilt downloads yet: a widget only loads from a signed app,
-and a download for other Macs would need a notarized Developer ID build.
+Once a release is out, download `kuma-status-<version>.zip` from the
+[latest release](https://github.com/dewab74/uptime-kuma-widget/releases/latest)
+(check it against the `.sha256` beside it), unzip it, and move
+`Kuma Status.app` to `/Applications`. The app is signed with a development
+certificate but not notarized, so macOS blocks the first open: choose
+**System Settings › Privacy & Security › Open Anyway**.
+
+Or build it yourself (needs Xcode 16+ and `brew install xcodegen`):
 
 ```bash
 git clone https://github.com/dewab74/uptime-kuma-widget.git
@@ -79,14 +84,17 @@ cp Config/Signing.example.xcconfig Config/Signing.xcconfig
 ```
 
 Put your team id in `Config/Signing.xcconfig` (the comment in it shows how to
-find it), then:
+find it; a free Apple ID's personal team works), then:
 
 ```bash
 scripts/build.sh --release
 ```
 
-Move `artifacts/Kuma Status.app` to `/Applications` and open it. On the first
-run it opens Settings:
+and use `artifacts/Kuma Status.app`.
+
+## Set up
+
+Open the app. On the first run it opens Settings:
 
 - **Server**: your Kuma address, e.g. `https://status.example.com`. You can
   paste a whole status page link (`https://status.example.com/status/home`)

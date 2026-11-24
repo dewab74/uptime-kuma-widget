@@ -71,15 +71,18 @@ Logs: `log stream --predicate 'subsystem == "io.github.dewab74.KumaStatus"' --in
 
 ## Releasing
 
-There are no binary releases yet: a widget only loads from a signed app, and a
-build that runs on other Macs needs a notarized Developer ID signature. Until
-then a release is a tag:
+Releases are cut locally, because the app has to be signed with a developer
+identity, which is not put in CI. The release zip is signed with a development
+certificate and not notarized (that needs a paid Developer ID), so macOS asks
+users to approve the first open.
 
 1. Build with `scripts/build.sh --release`, install it, add the widget in all
-   three sizes, and check it against a real Kuma: an outage shows within one
-   poll interval, and stopping the server greys the widget out.
+   three sizes, and check it against a real Uptime Kuma: an outage shows
+   within one poll interval, and stopping the server greys the widget out.
 2. In `CHANGELOG.md`, rename `[Unreleased]` to `[X.Y.Z] - YYYY-MM-DD`, set
-   `MARKETING_VERSION` in `Config/Base.xcconfig`, and commit
-   (`chore(release): X.Y.Z`).
-3. Tag `vX.Y.Z`, push it, and create the GitHub release from the changelog
-   section.
+   `MARKETING_VERSION = X.Y.Z` in `Config/Base.xcconfig`, and commit
+   (`chore(release): X.Y.Z`). Push it to `main`.
+3. Run `scripts/release.sh X.Y.Z --tested-with "macOS <version>, Uptime Kuma <version>" --dry-run`,
+   read the notes, then run it without `--dry-run`. It runs the tests, builds
+   and checks the signed app (`scripts/package-app.sh`), tags `vX.Y.Z`,
+   publishes the zip and its SHA256, then downloads them again to check.

@@ -14,11 +14,37 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
+      - run: swift test --package-path Packages/KumaKit -Xswiftc -warnings-as-errors
+
+      # The render tool draws every widget layout; running it catches a layout
+      # that crashes at runtime. The PNGs are kept for review.
+      - run: swift run --package-path Packages/KumaKit kuma-render widget-renders
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: widget-renders
+          path: widget-renders/
+          retention-days: 14
+
+  build:
+    # Unsigned, warnings as errors: proves the app and widget compile in both
+    # configurations. A widget only loads from a signed app, so these builds
+    # are not runnable; releases are signed and cut locally (scripts/release.sh).
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [Debug, Release]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v7
+
       - name: Install XcodeGen
         run: brew install xcodegen
 
-      - run: swift test --package-path Packages/KumaKit -Xswiftc -warnings-as-errors
-
-      # Unsigned, warnings as errors: proves the app and widget compile. A
-      # widget only loads from a signed app, so this build is not runnable.
-      - run: scripts/build.sh --check
+      - name: Build ${{ matrix.configuration }}
+        run: |
+          if [[ "${{ matrix.configuration }}" == Release ]]; then
+            scripts/build.sh --check-release
+          else
+            scripts/build.sh --check
+          fi

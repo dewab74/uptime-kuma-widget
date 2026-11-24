@@ -20,3 +20,5 @@ All notable changes to this project are documented here. The format follows
 - Settings: server address (a pasted status page link fills in the slug),
   slug, interval, open at login, and a connection test.
 - `kuma-render`, a development tool that renders the widget sizes to PNG.
+- CI builds Debug and Release and runs the tests; `scripts/release.sh`
+  publishes a signed zip with its SHA256 and checks the upload.
