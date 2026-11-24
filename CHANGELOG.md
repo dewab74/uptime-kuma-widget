@@ -18,6 +18,19 @@ All notable changes to this project are documented here. The format follows
   large widget and the menu bar list kept the status page's order.
 - `kuma-render --hide <statuses>` renders the widget as the Display settings
   would.
+- **Verify TLS certificate** (on by default) in Settings › Connection. Off, any
+  certificate the configured host presents is accepted, for a Kuma with a
+  self-signed or private-CA certificate; other hosts, such as a redirect
+  target, are still checked. A certificate failure now says so and points at
+  the switch. Debug builds take `-KumaVerifyCertificate NO`; `kuma-render`
+  takes `--insecure`.
+
+### Changed
+
+- Settings: the **Server** field is now **URL**, and its tab **Connection**. A
+  port in the URL (`http://kuma.lan:3001`, `[fd00::5]:3001`) is kept for
+  every request and for the status page link; a port outside 1–65535 or not
+  a number is refused with a message saying so.
 
 - Kuma Status, a menu bar app that polls an Uptime Kuma status page (public
   API, no login) every 30 s to 10 min, with exponential backoff up

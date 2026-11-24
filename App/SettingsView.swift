@@ -8,7 +8,7 @@ struct SettingsView: View {
     var body: some View {
         TabView {
             ServerSettings()
-                .tabItem { Label("Server", systemImage: "server.rack") }
+                .tabItem { Label("Connection", systemImage: "server.rack") }
             DisplaySettings()
                 .tabItem { Label("Display", systemImage: "line.3.horizontal.decrease.circle") }
         }
@@ -22,6 +22,7 @@ private struct ServerSettings: View {
     @State private var address = ""
     @State private var slug = ""
     @State private var interval = KumaConfiguration.defaultPollInterval
+    @State private var verifyCertificate = true
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
     @State private var test: TestResult?
     @State private var isTesting = false
@@ -38,18 +39,32 @@ private struct ServerSettings: View {
     var body: some View {
         Form {
             Section {
-                TextField("Server", text: $address, prompt: Text("https://status.example.com"))
+                TextField("URL", text: $address, prompt: Text("https://status.example.com:3001"))
                 TextField("Status page", text: $slug, prompt: Text("default"))
             } header: {
                 Text("Uptime Kuma")
             } footer: {
                 Text(
-                    "The page's slug is the last part of its link, /status/<slug>. "
-                        + "You can paste the whole status page link into Server. "
-                        + "Only monitors on a published status page are shown."
+                    "Include the port if Kuma is not on 80 or 443, e.g. http://kuma.lan:3001. "
+                        + "The page's slug is the last part of its link, /status/<slug>; "
+                        + "you can paste the whole status page link into URL. "
+                        + "Only monitors on a status page are shown."
                 )
                 .font(.caption)
                 .foregroundStyle(.secondary)
+            }
+
+            Section {
+                Toggle("Verify TLS certificate", isOn: $verifyCertificate)
+            } footer: {
+                Text(
+                    verifyCertificate
+                        ? "Recommended. Turn off only for a server with a self-signed or private-CA certificate."
+                        : "Any certificate this server presents is accepted. The connection is still encrypted, "
+                            + "but its identity is not checked."
+                )
+                .font(.caption)
+                .foregroundStyle(verifyCertificate ? Color.secondary : Color.orange)
             }
 
             Section {
@@ -96,11 +111,13 @@ private struct ServerSettings: View {
         address = configuration.baseURL.absoluteString
         slug = configuration.slug
         interval = configuration.pollInterval
+        verifyCertificate = configuration.verifyCertificate
     }
 
     private func parsed() -> KumaConfiguration? {
         do {
-            let configuration = try KumaConfiguration.parse(address: address, slug: slug, pollInterval: interval)
+            let configuration = try KumaConfiguration.parse(
+                address: address, slug: slug, pollInterval: interval, verifyCertificate: verifyCertificate)
             address = configuration.baseURL.absoluteString
             slug = configuration.slug
             return configuration

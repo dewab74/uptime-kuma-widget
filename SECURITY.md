@@ -15,6 +15,9 @@ not in a public issue. Expect an acknowledgement within a week.
   code, or read or write files outside its sandbox containers.
 - The sandbox, the hardened runtime, or the entitlements (outgoing network
   and the App Group only) being weakened.
+- With **Verify TLS certificate** on (the default), a certificate accepted
+  that macOS does not trust; with it off, an unverified certificate accepted
+  from any host other than the one configured.
 
 Out of scope: the app allows plain `http://` (App Transport Security is
 relaxed) because many Uptime Kuma servers run on a LAN without TLS. Use an
